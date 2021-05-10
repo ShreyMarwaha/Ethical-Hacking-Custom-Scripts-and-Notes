@@ -1,0 +1,46 @@
+# IFCONFIG vs IWCONFIG
+	ifconfig: deals with all network adapters
+	iwconfig: deals with only wireless network interfaces
+
+
+# CHANGE MAC ADDRESS
+(1) [disable network adapter]
+	>>ifconfig wlan0 down
+(2) [new MAC address should start from 00:...]
+	>> ifconfig hw ether <newMAC>
+		[hw stands for hardware]
+(3) [enable the wireless adapter]
+	>>ifconfig wlan0 up
+
+
+# ENABLE MONITOR MODE
+(1) [disable network adapter before ebabling monitor mode] 
+	>>ifconfig wlan0 down
+(2) [kill all the ongoing network task - precautionary measure + better results]
+	>>airmon-ng check kill
+(3) [change to monitor mode from managed mode (default)]
+	>>iwconfig wlan0 mode monitor
+(4) [enable the wireless adapter]
+	>>ifconfig wlan0 up
+(4.1) [to cross check that monitor mode is enabled - check Mode=___]
+	>>iwconfig
+
+# PACKET SNIFFING
+(0) Switch to monitor mode (say interface in monitor mode is named as wlan0)
+(1) [to discover all wireless network in range]
+	airodump-ng wlan0
+		[to quit press Ctrl+C]
+		
+		[ BSSID--> MAC address of target, 
+		  PWR--> signal strength, 
+		  Beacons--> frames send by network to broadcast its existance,
+			(all network devices even if hidden send these types of frames)
+		  Data-->
+		  #/s--> data packets collected in past 10s
+		  CH--> Channel
+		  MB--> max speed supported by network
+		  AUTH--> security encryption use
+		  ESSID--> name]
+
+
+# WIFI BANDS
