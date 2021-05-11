@@ -1,9 +1,9 @@
-# IFCONFIG vs IWCONFIG
+#B01 IFCONFIG vs IWCONFIG
 	ifconfig: deals with all network adapters
 	iwconfig: deals with only wireless network interfaces
 
 
-# CHANGE MAC ADDRESS
+#B02 CHANGE MAC ADDRESS
 (1) [disable network adapter]
 	>>ifconfig wlan0 down
 (2) [new MAC address should start from 00:...]
@@ -13,7 +13,7 @@
 	>>ifconfig wlan0 up
 
 
-# ENABLE MONITOR MODE
+#WH01 ENABLE MONITOR MODE
 (1) [disable network adapter before ebabling monitor mode] 
 	>>ifconfig wlan0 down
 (2) [kill all the ongoing network task - precautionary measure + better results]
@@ -25,7 +25,7 @@
 (4.1) [to cross check that monitor mode is enabled - check Mode=___]
 	>>iwconfig
 
-# PACKET SNIFFING
+#WH02 PACKET SNIFFING [Tools- airodump-ng]
 (0) Switch to monitor mode (say interface in monitor mode is named as wlan0)
 (1) [to discover all wireless network in range]
 	airodump-ng wlan0
@@ -43,7 +43,7 @@
 		  ESSID--> name]
 
 
-# WIFI BANDS SNIFFING
+#WH03 WIFI BANDS SNIFFING [Tools- airodump-ng]
 (0) default search for airudump-ng is only 2.4GHz.
 (1) [To seaarch 5GHz]
 	>> airodump-ng --band a wlan0
@@ -56,7 +56,7 @@
 	* do not specify band if u wanna search 2.4GHz band only
 
 
-# TARGETED SNIFFING
+#WH04 TARGETED SNIFFING [Tools- airodump-ng, wireshark]
 (1) [To search a specific target]
 	>> airodump-ng --bssid 5C:F9:FD:62:FE:09 --channel 7 --write test wlan0
 
@@ -76,7 +76,7 @@
 	* OPEN NETWORK: If the network is open network then you can see every url visited, every password entered using 'Wireshark'.
 
 	
-# DEAUTHENTICATION ATTACK
+#WH_A01 DEAUTHENTICATION ATTACK [Tools- aireplay-ng]
 (0.1) Disconnect any client from any network
 (0.2) Works on encrypted network (WEP, WPA & WPA2)
 (0.3) No need to know the network key
@@ -84,6 +84,25 @@
 
 -->> aireplay-ng --deauth [#DeauthPackets] -a [NetworkMAC] -c [TargetMac] [Interface]
 
+	HOW IT WORKS:-
+	Stakeholders involved: Hacker (us), Client (target), Access Point (Router)
+	(0.5.1) First we pretent to be client who we want to disconnect by changing our MAC addresss to the MAC address of client, And tell the router that I want to disconnect from you.
+		[pretent to be client by changing or MAC to client MAC, and send disconnect request]
+	(0.5.2) Then, we pretent to be the router by changing our MAC to Router's MAC address and tell the client that you requested to be disconnected, so I am going to disconnect you.
+		[pretent to be client by changing or MAC to client MAC, and tell you requested to be disconnected]
+	(0.5.3) this allows us to disconnect/deauthenticate any client from any network.
+
+
+(1) Gather bssid of target nwtwork using airodump-ng (#WH02)
+(2) Gather MAC (station) of target by targeted sniffing using airodump-ng (#WH04)
+(3) Make the airodump-ng running in the step-2, and open another terminal
+(4) [send deauth requests using the following command]
+	>>aireplay-ng --deauth 0 -a 5C:F9:FD:62:FE:09 -c B4:C4:FC:C8:6D:91 wlan0 
+
+-->> aireplay-ng --deauth <number of packers/> -a <access point's MAC/> -c <client's MAC/> wlan0
+	<number of packets/> = 0 (for infinite time attack)
+	Alternate:
+		--deauth: -0
 
 
 
