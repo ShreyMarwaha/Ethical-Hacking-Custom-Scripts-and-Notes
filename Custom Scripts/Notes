@@ -13,6 +13,11 @@
 	>>ifconfig wlan0 up
 
 
+
+----------------------------------------------------------------------------------
+
+
+
 #WH01 ENABLE MONITOR MODE
 (1) [disable network adapter before ebabling monitor mode] 
 	>>ifconfig wlan0 down
@@ -24,6 +29,9 @@
 	>>ifconfig wlan0 up
 (4.1) [to cross check that monitor mode is enabled - check Mode=___]
 	>>iwconfig
+
+
+
 
 #WH02 PACKET SNIFFING [Tools- airodump-ng]
 (0) Switch to monitor mode (say interface in monitor mode is named as wlan0)
@@ -43,6 +51,8 @@
 		  ESSID--> name]
 
 
+
+
 #WH03 WIFI BANDS SNIFFING [Tools- airodump-ng]
 (0) default search for airudump-ng is only 2.4GHz.
 (1) [To seaarch 5GHz]
@@ -54,6 +64,8 @@
 		  	 abg--> for both 2.4GHz & 5GHz at the same time
 		  	 ac--> lower than 6GHz ]
 	* do not specify band if u wanna search 2.4GHz band only
+
+
 
 
 #WH04 TARGETED SNIFFING [Tools- airodump-ng, wireshark]
@@ -75,7 +87,12 @@
 	* ENCRYPTION: BUT, the data is encrypted using the Security Encryption (WPA2, WPA, WEP) Used by their Wifi Router.
 	* OPEN NETWORK: If the network is open network then you can see every url visited, every password entered using 'Wireshark'.
 
-	
+
+
+----------------------------------------------------------------------------------
+
+
+
 #WH_A01 DEAUTHENTICATION ATTACK [Tools- aireplay-ng]
 (0.1) Disconnect any client from any network
 (0.2) Works on encrypted network (WEP, WPA & WPA2)
@@ -93,7 +110,7 @@
 	(0.5.3) this allows us to disconnect/deauthenticate any client from any network.
 
 
-(1) Gather bssid of target nwtwork using airodump-ng (#WH02)
+(1) Gather bssid (ie MAC address) of target wifi network using airodump-ng (#WH02)
 (2) Gather MAC (station) of target by targeted sniffing using airodump-ng (#WH04)
 (3) Make the airodump-ng running in the step-2, and open another terminal
 (4) [send deauth requests using the following command]
@@ -107,12 +124,79 @@
 
 
 
+#WH_A02_a WEP CRACKING [Tools- airodump-ng, aircrack-ng] 
+(0.1) Wired Equivalent Privacy
+(0.2) uses Encryption called RC4
+
+	HOW IT WORKS:-
+	(0.3.1) Client encrypts data using a key
+	(0.3.2) encrypted data is send in the air
+	(0.3.3) Router decrypts packet using the key
+	(0.3.4) same goes when router communicates with device
+
+	(0.3.5) Each packet is encrypted using a unique key stream
+	(0.3.6) Random Initialization Vector (IV) is used to generate the key steam.
+	(0.3.7) The IV is only 24-bits
+	(0.3.8) IV + Key (actual wifi password) = Key Stream
+	(0.3.9) Keysteam + "Data to send to router" = <encrypted data>
+	
+		(0.3.9.1) IV is too small (only 24-bits)
+		(0.3.9.2) IV is sent in Plain-Text
+		(0.3.9.3) IVs will repeat on busy network (since 24-bits is not big enough)
+		(0.3.9.4) Repeated IVs can be used to determine the Key Steam
+		(0.3.9.5) And hence Key (wifi password) can be obtained, along with all the traffic data, urls, passwords.
+
+
+(Useful when traffic ie #Data is high, Use FAKE AUTH ATTACK #WH_A02_b when #Data is low)
+(1) Gather bssid (ie MAC address) of target wifi network using airodump-ng (#WH02)
+(2) Gather MAC (station) of target by targeted sniffing using airodump-ng (#WH04), and save it in a file lets say 'basic_wep'
+(3) Let airodump run in the terminal in step-2, and use a seperate terminal to crack the KEY
+	>>aircrack-ng 'basic_wep-01.cap'
+	
+	(3.1) You can connect to that wifi using the 'ASCII key' given in the output.
+		(3.1.1) In some cases, only 'KEY' (like 00:11:22:33:44:55) is provided and 'ASCII password' is missing.
+		(3.1.2) Just remove the colons from the key and use it as a password (ie. 001122334455 in our case will be the password)
 
 
 
 
+#WH_A02_b FAKE AUTHENTICATION ATTACK (when less traffic ie. #Data is low)
+	Problem: If network is not busy, It would take a lot of time to capture enough IVs
+	Solution: -->> Force the AP (Access Point ie wifi router) to generate new IVs
+
+	Problem: APs only communicate with connected deivices
+		--> we can't communicate with it
+		--> we can't even start the attack
+	Solution: -->> Associate with the AP before launching the attack
 
 
+(1) [t1] Gather bssid (ie MAC address) of target wifi network using airodump-ng (#WH02)
+(2) [t1] Gather MAC (station) of target by targeted sniffing using airodump-ng (#WH04), and save it in a file lets say 'aireplay_file'
+(3) [t1] As you would notice #Data is incresing very very slow, or not even increasing.
+(4) [t2] Let airodump run in the terminal in step-2, and use a seperate terminal to start FAKE AUTH ATTACK
+	>> aireplay-ng --fakeauth 0 -a 00:11:22:33:44:55 -h aa:bb:cc:dd:ee wlan0
+
+-->> aireplay-ng --fakeauth 0 -a <MAC of wifi router/> -h <our MAC address/> wlan0
+
+	* You would see that now we are associated with the target Wifi, and same would be reflected in [t1].
+
+(5) [t3] ARP Request Replay Attack
+	HOW IT WORKS:-
+	(5.1) Wait for an ARP packet
+	(5.2) Capture it, and replay it (retransmit it)
+	(5.3) This causes the AP to produce another packet with a new IV. (router is forced to do so)
+	(5.4) Keep doing this till we have enough IVs to crack the key.
+
+	>> aireplay-ng --arpreplay -b 00:11:22:33:44:55 -h aa:bb:cc:dd:ee wlan0
+
+-->> aireplay-ng --arpreplay -b <MAC of wifi router/> -h <our MAC address/> wlan0
+
+(6) [t3] wait for some time for ARP packet to be sent by router. Once it is sent by the router we capture it, and retransmit it. Once retransmition starts, you would notice speedy increase in #Data [t1].
+
+(7) [t2] Associate one more time (step-4)
+
+(8) crack KEY using aircrack-ng (basically follow WEP Cracking [#WH_A02_a] Step-3)
+	>>aircrack-ng 'aireplay_file-01.cap'
 
 
 
