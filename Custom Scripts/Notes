@@ -43,4 +43,62 @@
 		  ESSID--> name]
 
 
-# WIFI BANDS
+# WIFI BANDS SNIFFING
+(0) default search for airudump-ng is only 2.4GHz.
+(1) [To seaarch 5GHz]
+	>> airodump-ng --band a wlan0
+
+-->> airodump-ng --band <band/> wlan0
+		<band/> = [ a--> 5GHz,
+		  	 bg--> both use 2.4 GHz 
+		  	 abg--> for both 2.4GHz & 5GHz at the same time
+		  	 ac--> lower than 6GHz ]
+	* do not specify band if u wanna search 2.4GHz band only
+
+
+# TARGETED SNIFFING
+(1) [To search a specific target]
+	>> airodump-ng --bssid 5C:F9:FD:62:FE:09 --channel 7 --write test wlan0
+
+-->> airodump-ng --bssid <bssid/> --channel <ch/> --write <filename/> wlan0
+	<bssid/> --> bssid of target
+	<ch/> --> channel of target
+	<filename/> --> name of file to write sniffed data of target
+	* All these information is collected from the output of command "airodump-ng wlan0"
+
+(2) The Output shows the number of devices connected to this network, and their MAC address under "STATION"
+	Some devices that are trying to connect to this network will show under "PROBE"
+
+(3) Now, when you quit using Ctrl+C, you can see the output data files (05 files - .cap, .csv, .netxml, .log.csv) with your name provided.
+
+(4) In .csv file, it has everything that the connected devices do with internet, ie. passwords they entered, sites they visited, everyting they have done while you were sniffing.
+	* ENCRYPTION: BUT, the data is encrypted using the Security Encryption (WPA2, WPA, WEP) Used by their Wifi Router.
+	* OPEN NETWORK: If the network is open network then you can see every url visited, every password entered using 'Wireshark'.
+
+	
+# DEAUTHENTICATION ATTACK
+(0.1) Disconnect any client from any network
+(0.2) Works on encrypted network (WEP, WPA & WPA2)
+(0.3) No need to know the network key
+(0.4) No need to connect to the network
+
+-->> aireplay-ng --deauth [#DeauthPackets] -a [NetworkMAC] -c [TargetMac] [Interface]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
