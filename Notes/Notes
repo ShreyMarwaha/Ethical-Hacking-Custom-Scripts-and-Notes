@@ -176,8 +176,8 @@
 (4) [t2] Let airodump run in the terminal in step-2, and use a seperate terminal to start FAKE AUTH ATTACK
 	>> aireplay-ng --fakeauth 0 -a 00:11:22:33:44:55 -h aa:bb:cc:dd:ee wlan0
 
--->> aireplay-ng --fakeauth 0 -a <MAC of wifi router/> -h <our MAC address/> wlan0
-
+-->> aireplay-ng --fakeauth <seconds between attacks/> -a <MAC of wifi router/> -h <our MAC address/> wlan0
+	
 	* You would see that now we are associated with the target Wifi, and same would be reflected in [t1].
 
 (5) [t3] ARP Request Replay Attack
@@ -197,6 +197,69 @@
 
 (8) crack KEY using aircrack-ng (basically follow WEP Cracking [#WH_A02_a] Step-3)
 	>>aircrack-ng 'aireplay_file-01.cap'
+
+
+
+
+#WH_A03_a WPA/WPA2 WPS CRACKING (Without Wordlist)
+(0) Vulnerability - WPS
+	(0.1) WPS is a feature that can be used with WPA & WPA2
+	(0.2) Allows clients to connect without the password
+	(0.3) Authentication is done using 8-digit pin
+		(0.3.1) 8 digits is very small
+		(0.3.2) we can try all possible pins in relatively short time
+		(0.3.3) Then the WPS can be used to compute actual password
+	* This only works if the router is configured not to use PBC (Push Button Authentication), if PBC is not pressed then the router will refuse all WPS requests
+	* Usually WPS comes disabled and nowadays router comes with PBC.
+
+(1) [t1] To capture all wifi that uses WPS
+	>> wash --interface wla0
+	[ lck --> whether WPS is locked or not (should be 'NO' for attacking]
+
+(2) [t2] *Reaver that is preinstalled in Kali is buggy, so use one provided in 'Softwares'
+	(2.1) go to dir where reaver is downloaded
+	(2.2) make is executable
+		>> chmod +x reaver
+	(2.3) Bruteforce every possible pin using Reaver
+		>> ./reaver --bssid 11:22:33:44 --channel 7 --interface wlan0 -vvv --no-associate
+-->> ./reaver --bssid <MAC of Target/> --channel <ch/> --interface wlan0 -vvv --no-associate
+* reaver has a feature of automatic association,but it is buggy, so better to do it manually.
+
+(3) [t1] Associate with target wifi using 'Fake Auth Attack' (just like WEP #WH_A02_b)
+	>>aireplay-ng --fakeauth 30 -a 11:22:33:44:55:66 -h aa:bb:cc:dd:ee:ff wlan0 
+
+
+#WH_A03_a WPA/WPA2 CRACKING
+CAPTURING HANDSHAKE #WH_A03_a_i [Tool- airodump-ng, aireplay-ng] :
+(1) [t1] Gather bssid (ie MAC address) of target wifi network using airodump-ng (#WH02)
+(2) [t1] Gather MAC (station) of target by targeted sniffing using airodump-ng (#WH04), and save it in a file lets say 'wpa_handshake'
+(3) [t2] Now, we have to wait to caprure WPA handshake, OR we can use 'Deauth Attack' (#WH_A01) [basicaly handshake is captured when the device reconnects manually/automatically after deauthentication]
+	*  deauth time should be very less in this case eg 5-10, and not infinity (0) or very large number. We just want to disconnect the device for some time and let it connect thereafter in order to capture handshake.
+(4) You will see 'WPA handhsake in [t1]' when done. It will be stored in the filename we provided earlier ie 'wpa_handshake' 
+	* Handshake doesn't contain any data that helps recover password
+	** It contains data that can be used to check if a key is valid or not
+
+CREATING WORDLIST #WH_A03_a_ii [Tool- Crunch]:
+(6) -->> crunch <min length/> <max length/> <all character to use/> -t <pattern/> -o <output filename/>
+* see crunch man for more options
+	>> crunch 6 6 123abc$ -t a@@@@b -o mywordlist
+
+We iterate over all the generated combinations in wordlist (wordlist combination + Handshake = MIC, compare it with MIC already in handshake. If it matches then the wordlist combination is the password.
+
+(7) Try the wordlist
+	>> aricrack-ng wpa_handshake-01.cap -w mywordlist
+
+-->> aricrack-ng <handshake filename/> -w <wordlist name/>
+
+FURTHER EXPLORATION:
+** You can Pipe wordlist from crunch to aircrack-ng
+** Use GPU to increase speed a lot faster (around 17x times)
+** Use online services that crack Handshake, They uses huge wordlist and super computers
+*** Also methods to pause your cracking process and resume later.
+
+
+
+
 
 
 
