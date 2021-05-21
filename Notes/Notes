@@ -259,6 +259,135 @@ FURTHER EXPLORATION:
 
 
 
+-------------------------------------------------------------------------
+
+
+
+#NS_01 DISCOVERING DEVICES CONNECTED TO SAME NETWORK
+(1) Check your IP (lets say 192.168.1.5) [inet=ip address, ether=MAC address]
+	>> ifconfig 
+(2) discover other devices on same network 
+	[IPs over a network can range from xxx.xxx.x.1 to xxx.xxx.x.254]
+	>> netdiscover -r 192.168.1/24
+* to search over all 254 we do /24 (** not /254)
+
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+*** IMPORTANT *** 
+(https://samiux.blogspot.com/2020/03/howto-fix-netdiscover-not-working.html)
+
+The libpcap0.8 is upgraded from 1.8.1-6 to 1.9.1-2 since Kali 2019.4. The "-r" switch of netdiscover is no longer workable since then as it is no longer updated since Oct 8, 2019. It is required to downgrade the libpcap0.8 to the version 1.8.1-6 and it should be held in order to prevent it from upgrade automatically in the future until netdiscover is upgraded accordingly.
+
+>> wget http://ftp.us.debian.org/debian/pool/main/libp/libpcap/libpcap0.8_1.8.1-6_amd64.deb
+>> sudo dpkg -i libpcap0.8_1.8.1-6_amd64.deb
+>> sudo apt-mark hold libpcap0.8
+
+Now, you can run it with "-r" switch.
+
+>> sudo netdiscover -r 10.0.2.0/24
+- - - - - - - - - - - - - - - - - - - - - 
+
+
+
+
+#NS_02 GATHERING SENSITIVE INFORMATION ABOUT CONNECTED DEVICES
+ZENMAP is GUI of NMAP. (*Not available by default on Kali)
+	
+	* PING SCAN
+		This identifies all of the IP addresses that are currently online without sending any packers to these hosts. [used to find IP and MAC of all devices in the same network]
+			>> nmap -sn 192.168.1.1/24
+		
+	* QUICK SCAN
+		- Shows more info than 'Ping Scan'.
+		- Slower than 'Ping Scan', but faster than 'Normal Scan' 
+		- Every TCP and UDP port is scanned.
+		- Shows all OPEN PORTS in the router.
+			>> nmap -T4 -F 192.168.1.1/24
+
+	* QUICK SCAN PLUS
+		- more info than 'Quick Scan'
+			>> map -sV -T4 -O -F --version-light 192.168.1.1/24
+			
+	[ iPhone default ssh password after jail-break: alpine
+		>> ssh root@<IP of iphone/> ]
+		
+
+#NS_03 ARP POISONING
+
+	How Does it work: (scene- all PCs and Hacker PC are connected to same Wifi network)
+		(0.1) First we can know the MAC of target usning the 'Targeted Sniffing' (#WH04)
+		(0.2) Then we send and ARP Requset (Address Resolution Protocol) to all the PCs in the same network. [Hacker: (to all) "Who has MAC addr 00:11:22:33:44:99]
+		(0.3) All other will ignore this request, only the PC with that MAC will respond.
+		    [Target: (to attacker) "YEs i hAvE ThAt MAC]
+		    
+		    * All this communication is done through ARP protocol.
+		    ** Every PC has an ARP table, which links IP address on same network to their MAC address.
+		    	(to view your ARP table >>arp -a )
+		    	
+		    	
+	#NS_03_a ARP SPOOFING
+		(0.4) Tell the Gateway (Access Point Wifi) that i am <IP of target>. So the AP (Access Point) will update its ARP table, and it will associate this IP address to out MAC address.
+		
+		(0.5) We will do same with the Target -  that i am <IP of Router>. The target will also update its ARP table.
+		
+		* Now the commmunication will be done via Attacker (Man In The Middle).
+		
+		
+		Why ARP Spoofing is possible:
+			(0) Not So safe
+			(1) Clients accept responses even if they did not send request.
+			(2) Clients trut response without any form of verification.
+			
+(0) To find IP of Router
+	>> route -n			
+(1) First we are gonna tell Target that I am the router
+	>> arpspoof -i wlan0 -t <IP of Target/> <IP of Router/>
+(2) Do same with the Router
+	>> arpspoof -w wlan0 -t <IP of Router/> <IP of TARGET/>
+(3) Now we are the MITM. But the requests send by the target to us (Thingking us as router) would not be passed to the actual router (this is due to security feature in linux). To enable this fordwarding, we are gonna enable port forwarding
+	>> echo 1 > /proc/sys/net/ipv4/ip_forward
+			
+		
+		
+		
+	
+	
+	    
+	
+	
+		
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
