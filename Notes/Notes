@@ -346,7 +346,15 @@ ZENMAP is GUI of NMAP. (*Not available by default on Kali)
 (3) Now we are the MITM. But the requests send by the target to us (Thingking us as router) would not be passed to the actual router (this is due to security feature in linux). To enable this fordwarding, we are gonna enable port forwarding
 	>> echo 1 > /proc/sys/net/ipv4/ip_forward
 			
-		
+
+
+#NS_04 BETTERCAP
+(1) To run Bettercap terminal	
+	>> bettercap -iface wlan0
+(2) To track new hosts in the network
+	>> net.probe on
+(3) Show the discovered clients
+	>> net.show
 		
 		
 	
